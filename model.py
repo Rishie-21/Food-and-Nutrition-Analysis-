@@ -46,21 +46,21 @@ predictions = Dense(22, activation='softmax')(x)
 
 model = Model(inputs=base_model.input, outputs=predictions)
 
-for layer in base_model.layers:
-    layer.trainable = False
+# Unfreeze some layers
+for layer in base_model.layers[-30:]:
+    layer.trainable = True
 
-model.compile(optimizer=Adam(lr=0.001), loss='categorical_crossentropy', metrics=['accuracy'])
-callbacks = [ModelCheckpoint('best_model.h5', save_best_only=True),
-             EarlyStopping(patience=10, restore_best_weights=True)]
+model.compile(optimizer=Adam(lr=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 
-history = model.fit(
-      train_generator,
-      steps_per_epoch=100,
-      epochs=10,
-      validation_data=validation_generator,
-      validation_steps=50,
-      callbacks=callbacks,
-      verbose=2)
+# Continue training with the same callbacks
+history_fine_tune = model.fit(
+    train_generator,
+    steps_per_epoch=100,
+    epochs=10,
+    validation_data=validation_generator,
+    validation_steps=50,
+    callbacks=callbacks,
+    verbose=2)
 # Evaluate the model
 val_generator = test_datagen.flow_from_directory(
     validation_dir,
